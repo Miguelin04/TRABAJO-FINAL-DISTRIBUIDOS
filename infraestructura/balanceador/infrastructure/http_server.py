@@ -20,6 +20,23 @@ class BalancerHandler(BaseHTTPRequestHandler):
         self._proxy_request("GET")
 
     def do_POST(self):
+        if self.path == '/api/simulate-crash':
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length)
+            try:
+                data = json.loads(body)
+                node_id = data.get('id')
+                crash = data.get('crash', True)
+                for srv in self.load_balancer.servers:
+                    if srv.id == node_id:
+                        srv.simulated_crash = crash
+                        if not crash:
+                            srv._consecutive_failures = 0
+                self._send_json_response(200, {"status": "success"})
+            except Exception as e:
+                self._send_json_response(400, {"error": str(e)})
+            return
+            
         self._proxy_request("POST")
 
     def _proxy_request(self, method):

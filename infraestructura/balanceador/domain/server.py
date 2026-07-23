@@ -21,15 +21,17 @@ class BackendServer:
         self.failed = 0
         self._consecutive_failures = 0
         self._latency_samples = []
+        self.simulated_crash = False
 
     def check_health(self):
         """Realiza el ping al backend usando urllib (biblioteca estándar)."""
         start = time.time()
         url = f"{self.address}/health"
         
-        try:
-            req = urllib.request.Request(url, method="GET")
-            with urllib.request.urlopen(req, timeout=3.0) as response:
+        if not self.simulated_crash:
+            try:
+                req = urllib.request.Request(url, method="GET")
+            with urllib.request.urlopen(req, timeout=1.0) as response:
                 elapsed = (time.time() - start) * 1000
                 if response.status == 200:
                     with self.lock:
@@ -48,7 +50,7 @@ class BackendServer:
 
         with self.lock:
             self._consecutive_failures += 1
-            if self._consecutive_failures >= 3:
+            if self._consecutive_failures >= 1:
                 changed = (self.status != 'INACTIVO')
                 self.status = 'INACTIVO'
                 self.latency = 9999
@@ -58,6 +60,15 @@ class BackendServer:
 
     def proxy_request(self, method, path, headers, body):
         """Reenvía la petición HTTP de negocio al backend usando urllib."""
+        if self.simulated_crash:
+            with self.lock:
+                self.active_connections -= 1
+                self.failed += 1
+                self._consecutive_failures += 1
+                if self._consecutive_failures >= 1:
+                    self.status = 'INACTIVO'
+            return 502, b'{"error": "Simulated Crash - Nodo apagado"}', {}
+
         with self.lock:
             self.active_connections += 1
             self.total_requests += 1
@@ -93,6 +104,6 @@ class BackendServer:
                 self.active_connections -= 1
                 self.failed += 1
                 self._consecutive_failures += 1
-                if self._consecutive_failures >= 3:
+                if self._consecutive_failures >= 1:
                     self.status = 'INACTIVO'
             return 502, b'{"error": "Bad Gateway - Nodo fallido durante request"}', {}

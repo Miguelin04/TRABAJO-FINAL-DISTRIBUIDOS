@@ -12,8 +12,8 @@ class CircuitManager:
         self.last_persisted_state = self.circuit_breaker.get_state()
         self.db_repository.insert_circuit_state(self.last_persisted_state)
         
-        # Para el endpoint status (última petición)
-        self.last_request_data = None
+        # Para el endpoint status (historial de peticiones)
+        self.historial_peticiones = []
 
     def execute_request(self):
         start_time = time.time()
@@ -46,10 +46,13 @@ class CircuitManager:
                     self.last_persisted_state = new_state
                 
                 response_time = int((time.time() - start_time) * 1000)
-                self.last_request_data = {
+                peticion = {
                     "tiempo_respuesta_ms": response_time,
-                    "mensaje": data.get("mensaje", "")
+                    "mensaje": data.get("mensaje", ""),
+                    "timestamp": time.strftime('%H:%M:%S')
                 }
+                self.historial_peticiones.insert(0, peticion)
+                self.historial_peticiones = self.historial_peticiones[:5] # Mantener solo las últimas 5
                 
                 return {
                     "circuit_state": new_state,
@@ -73,7 +76,7 @@ class CircuitManager:
     def get_dashboard_status(self):
         data = self.db_repository.get_dashboard_data()
         data["circuit_breaker"]["fallos_acumulados"] = self.circuit_breaker.failures
-        data["ultima_peticion"] = self.last_request_data
+        data["historial_peticiones"] = self.historial_peticiones
         
         # Determinar estado del balanceador basado en si hay nodos activos
         hay_activos = any(n["estado"] == "ACTIVO" for n in data["nodos"])

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchStatus } from '../services/api';
+import { fetchStatus, simulateCrash } from '../services/api';
 
 export default function MonitoringPage() {
   const [data, setData] = useState(null);
@@ -31,7 +31,14 @@ export default function MonitoringPage() {
   const totalNodos = nodos.length || 3;
 
   const cbHistory = data.historial_circuit_breaker || [];
-  const ultima = data.ultima_peticion;
+  const historialPeticiones = data.historial_peticiones || [];
+  
+  // Calcular promedio del historial
+  let tiempoPromedio = 'N/A';
+  if (historialPeticiones.length > 0) {
+    const total = historialPeticiones.reduce((acc, curr) => acc + curr.tiempo_respuesta_ms, 0);
+    tiempoPromedio = `${Math.round(total / historialPeticiones.length)} ms`;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -55,7 +62,7 @@ export default function MonitoringPage() {
         </div>
         <div className="bg-netflix-dark p-4 rounded-lg border border-gray-800 flex flex-col justify-center">
           <span className="text-sm text-netflix-gray uppercase tracking-wider">Último Tiempo Promedio</span>
-          <span className="text-2xl font-bold">{ultima ? `${ultima.tiempo_respuesta_ms} ms` : 'N/A'}</span>
+          <span className="text-2xl font-bold">{tiempoPromedio}</span>
         </div>
         <div className="bg-netflix-dark p-4 rounded-lg border border-gray-800 flex flex-col justify-center">
           <span className="text-sm text-netflix-gray uppercase tracking-wider">Database SQLite</span>
@@ -145,6 +152,15 @@ export default function MonitoringPage() {
                    <div className="flex justify-between"><span className="text-netflix-gray">IP:</span> <span className="font-mono text-blue-400">{ip}</span></div>
                    <div className="flex justify-between"><span className="text-netflix-gray">Puerto:</span> <span>{9001 + i}</span></div>
                    <div className="flex justify-between"><span className="text-netflix-gray">Estado:</span> <span className={n.estado === 'ACTIVO' ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>{n.estado}</span></div>
+                   <div className="flex justify-between items-center mt-2 border-t border-gray-700 pt-2">
+                     <span className="text-netflix-gray text-xs">Simulador:</span>
+                     <button
+                       onClick={() => simulateCrash(n.id, n.estado === 'ACTIVO')}
+                       className={`px-3 py-1 rounded text-xs font-bold ${n.estado === 'ACTIVO' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                     >
+                       {n.estado === 'ACTIVO' ? 'Apagar Nodo' : 'Encender Nodo'}
+                     </button>
+                   </div>
                 </div>
                );
              })}
@@ -155,14 +171,20 @@ export default function MonitoringPage() {
       {/* Tablas Inferiores (6) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-netflix-dark p-5 rounded-lg border border-gray-800">
-          <h3 className="font-bold mb-4 border-b border-gray-700 pb-2">Última Petición Realizada</h3>
-          {ultima ? (
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-netflix-gray">Respuesta HTTP:</span> <span className="font-mono">JSON</span></div>
-              <div className="flex justify-between"><span className="text-netflix-gray">Tiempo:</span> <span className="font-bold">{ultima.tiempo_respuesta_ms} ms</span></div>
-              <div className="mt-4 p-3 bg-black rounded border border-gray-800 text-xs text-green-400 font-mono break-words">
-                {ultima.mensaje || "Sin mensaje"}
-              </div>
+          <h3 className="font-bold mb-4 border-b border-gray-700 pb-2">Historial de Peticiones (Últimas 5)</h3>
+          {historialPeticiones.length > 0 ? (
+            <div className="space-y-3">
+              {historialPeticiones.map((pet, idx) => (
+                <div key={idx} className="p-3 bg-gray-900 rounded border border-gray-800 text-sm">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-netflix-gray">Hora: {pet.timestamp}</span>
+                    <span className="font-bold text-green-400">{pet.tiempo_respuesta_ms} ms</span>
+                  </div>
+                  <div className="text-xs font-mono break-words text-blue-300">
+                    {pet.mensaje || "Sin mensaje"}
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
              <div className="text-netflix-gray text-sm">Aún no se ha registrado ninguna petición.</div>

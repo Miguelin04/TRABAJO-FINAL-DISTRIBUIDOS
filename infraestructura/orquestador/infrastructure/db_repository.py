@@ -15,7 +15,7 @@ class DbRepository:
             CREATE TABLE IF NOT EXISTS circuit_log (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 estado TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
             )
         ''')
         # Insert initial CLOSED state if empty
@@ -44,7 +44,7 @@ class DbRepository:
         circuit_estado = circuit_row[0] if circuit_row else "CLOSED"
         
         # Historial del circuito (últimos 10)
-        cursor.execute("SELECT id, estado, timestamp FROM circuit_log ORDER BY id DESC LIMIT 10")
+        cursor.execute("SELECT id, estado, datetime(timestamp, 'localtime') FROM circuit_log ORDER BY id DESC LIMIT 10")
         historial_circuit = [{"id": row[0], "estado": row[1], "timestamp": row[2]} for row in cursor.fetchall()]
         
         # Nodos

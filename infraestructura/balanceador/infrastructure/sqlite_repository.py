@@ -16,7 +16,7 @@ class DbRepository:
                 nodo_id TEXT PRIMARY KEY,
                 estado TEXT,
                 url TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
             )
         ''')
         # Migración: añadir columna url si no existe (compatibilidad con BD antigua)
@@ -32,11 +32,11 @@ class DbRepository:
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO estado_nodos (nodo_id, estado, url, timestamp)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, datetime('now', 'localtime'))
             ON CONFLICT(nodo_id) DO UPDATE SET 
                 estado=excluded.estado,
                 url=excluded.url,
-                timestamp=CURRENT_TIMESTAMP
+                timestamp=datetime('now', 'localtime')
         ''', (node_id, estado, url))
         conn.commit()
         conn.close()

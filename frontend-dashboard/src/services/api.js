@@ -21,3 +21,17 @@ export const procesarPago = async () => {
     return { data: null, status: 500 };
   }
 };
+
+export const simulateCrash = async (nodeId, crash) => {
+  try {
+    const response = await fetch(`${API_URL}/api/simulate-crash`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: nodeId, crash: crash })
+    });
+    return response.ok;
+  } catch (error) {
+    console.error("Error al simular crash:", error);
+    return false;
+  }
+};

@@ -10,7 +10,7 @@ class OrchestratorHandler(http.server.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header("Access-Control-Allow-Headers", "X-Requested-With, Content-type")
         self.end_headers()
 
@@ -29,6 +29,22 @@ class OrchestratorHandler(http.server.SimpleHTTPRequestHandler):
             
         else:
             self._send_json_response(404, {"error": "Ruta no encontrada"})
+
+    def do_POST(self):
+        if self.path == '/api/simulate-crash':
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            try:
+                import urllib.request
+                req = urllib.request.Request(f"{self.circuit_manager.base_url}api/simulate-crash", data=body, method='POST')
+                req.add_header('Content-Type', 'application/json')
+                with urllib.request.urlopen(req, timeout=2.0) as response:
+                    self._send_json_response(200, {"status": "success"})
+            except Exception as e:
+                self._send_json_response(500, {"error": str(e)})
+            return
+            
+        self._send_json_response(404, {"error": "Ruta no encontrada"})
 
     def _send_json_response(self, code, payload):
         self.send_response(code)
