@@ -28,25 +28,27 @@ class BackendServer:
         start = time.time()
         url = f"{self.address}/health"
         
-        if not self.simulated_crash:
+        if self.simulated_crash:
+            # Si simulamos caída, saltamos directo a la lógica de fallo
+            pass
+        else:
             try:
                 req = urllib.request.Request(url, method="GET")
-            with urllib.request.urlopen(req, timeout=1.0) as response:
-                elapsed = (time.time() - start) * 1000
-                if response.status == 200:
-                    with self.lock:
-                        self._latency_samples.append(elapsed)
-                        if len(self._latency_samples) > 10:
-                            self._latency_samples.pop(0)
-                        self.latency = sum(self._latency_samples) / len(self._latency_samples)
-                        self._consecutive_failures = 0
-                        
-                        # Retornar True si hubo un cambio de estado
-                        changed = (self.status != 'ACTIVO')
-                        self.status = 'ACTIVO'
-                        return changed
-        except Exception:
-            pass
+                with urllib.request.urlopen(req, timeout=1.0) as response:
+                    elapsed = (time.time() - start) * 1000
+                    if response.status == 200:
+                        with self.lock:
+                            self._latency_samples.append(elapsed)
+                            if len(self._latency_samples) > 10:
+                                self._latency_samples.pop(0)
+                            self.latency = sum(self._latency_samples) / len(self._latency_samples)
+                            self._consecutive_failures = 0
+                            
+                            changed = (self.status != 'ACTIVO')
+                            self.status = 'ACTIVO'
+                            return changed
+            except Exception:
+                pass
 
         with self.lock:
             self._consecutive_failures += 1
