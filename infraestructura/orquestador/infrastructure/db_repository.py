@@ -34,6 +34,7 @@ class DbRepository:
 
     def get_dashboard_data(self):
         """Lee toda la información para el frontend"""
+        self._init_db() # Garantiza que las tablas existan incluso si se borra el archivo
         conn = sqlite3.connect(self.db_path, timeout=15.0)
         cursor = conn.cursor()
         

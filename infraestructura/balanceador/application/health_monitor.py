@@ -45,5 +45,9 @@ class HealthMonitor:
 
     def start(self):
         """Despliega el hilo de fondo (daemon) que corre el checker."""
+        # Forzar registro inicial de todos los nodos en la BD con su URL actual
+        for srv in self.balancer.servers:
+            self.db.update_node_state(srv.id, srv.status, srv.address)
+
         t = threading.Thread(target=self.health_checker_loop, daemon=True)
         t.start()
