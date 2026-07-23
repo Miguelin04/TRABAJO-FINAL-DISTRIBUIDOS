@@ -1,0 +1,18 @@
+[
+    {
+        "id": "Integrante1",
+        "url": "http:192.168.1.11:5173"
+    },
+    {
+        "id": "Integrante2",
+        "url": "http://servicio-pagos-2:9002"
+    },
+    {
+        "id": "Integrante3",
+        "url": "http://servicio-pagos-3:9003"
+    },
+    {
+        "id": "Integrante4",
+        "url": "http://servicio-pagos-4:9004"
+    }
+]

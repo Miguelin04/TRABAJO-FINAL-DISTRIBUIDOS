@@ -1,0 +1,8 @@
+/home/miguel/Escritorio/Sistemas Distribuidos/APE 16 - Distribuidos/microservicios/servicio-pagos-1/src/main/java/com/netflix/pagos/PagosApplication.java
+/home/miguel/Escritorio/Sistemas Distribuidos/APE 16 - Distribuidos/microservicios/servicio-pagos-1/src/main/java/com/netflix/pagos/application/dto/HealthResponseDTO.java
+/home/miguel/Escritorio/Sistemas Distribuidos/APE 16 - Distribuidos/microservicios/servicio-pagos-1/src/main/java/com/netflix/pagos/infrastructure/controller/HealthController.java
+/home/miguel/Escritorio/Sistemas Distribuidos/APE 16 - Distribuidos/microservicios/servicio-pagos-1/src/main/java/com/netflix/pagos/domain/model/Pago.java
+/home/miguel/Escritorio/Sistemas Distribuidos/APE 16 - Distribuidos/microservicios/servicio-pagos-1/src/main/java/com/netflix/pagos/infrastructure/network/NetworkService.java
+/home/miguel/Escritorio/Sistemas Distribuidos/APE 16 - Distribuidos/microservicios/servicio-pagos-1/src/main/java/com/netflix/pagos/application/service/PagoApplicationService.java
+/home/miguel/Escritorio/Sistemas Distribuidos/APE 16 - Distribuidos/microservicios/servicio-pagos-1/src/main/java/com/netflix/pagos/application/dto/PagoResponseDTO.java
+/home/miguel/Escritorio/Sistemas Distribuidos/APE 16 - Distribuidos/microservicios/servicio-pagos-1/src/main/java/com/netflix/pagos/infrastructure/controller/PagosController.java

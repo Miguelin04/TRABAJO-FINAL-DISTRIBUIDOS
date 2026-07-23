@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  # =========================================
+  # 1. Microservicios Java (Spring Boot)
+  # =========================================
+  servicio-pagos-1:
+    build:
+      context: ./microservicios/servicio-pagos-1
+      dockerfile: Dockerfile
+    container_name: nodo_pago_1
+    ports:
+      - "9001:9001"
+    networks:
+      - distribuidos_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  servicio-pagos-2:
+    build:
+      context: ./microservicios/servicio-pagos-2
+      dockerfile: Dockerfile
+    container_name: nodo_pago_2
+    ports:
+      - "9002:9002"
+    networks:
+      - distribuidos_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  servicio-pagos-3:
+    build:
+      context: ./microservicios/servicio-pagos-3
+      dockerfile: Dockerfile
+    container_name: nodo_pago_3
+    ports:
+      - "9003:9003"
+    networks:
+      - distribuidos_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  servicio-pagos-4:
+    build:
+      context: ./microservicios/servicio-pagos-4
+      dockerfile: Dockerfile
+    container_name: nodo_pago_4
+    ports:
+      - "9004:9004"
+    networks:
+      - distribuidos_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # =========================================
+  # 2. Infraestructura Central (Python)
+  # =========================================
+  balanceador:
+    build:
+      context: ./infraestructura/balanceador
+      dockerfile: Dockerfile
+    container_name: balanceador_rr
+    environment:
+      - PORT=8080
+      - DB_PATH=/database/nodos.db
+    volumes:
+      - sqlite_data:/database
+    ports:
+      - "8080:8080"
+    networks:
+      - distribuidos_net
+    depends_on:
+      servicio-pagos-1:
+        condition: service_healthy
+      servicio-pagos-2:
+        condition: service_healthy
+      servicio-pagos-3:
+        condition: service_healthy
+      servicio-pagos-4:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  orquestador:
+    build:
+      context: ./infraestructura/orquestador
+      dockerfile: Dockerfile
+    container_name: orquestador_circuit_breaker
+    environment:
+      - PORT=8000
+      - LOAD_BALANCER_URL=http://balanceador:8080/
+      - DB_PATH=/database/nodos.db
+    volumes:
+      - sqlite_data:/database
+    ports:
+      - "8000:8000"
+    networks:
+      - distribuidos_net
+    depends_on:
+      balanceador:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # =========================================
+  # 3. Frontend Dashboard (React + Nginx)
+  # =========================================
+  frontend:
+    build:
+      context: ./frontend-dashboard
+      dockerfile: Dockerfile
+      args:
+        # Aquí el frontend accede al Orquestador directamente vía el navegador del cliente. 
+        # Por eso usamos localhost (host de la PC) y no la red interna de Docker.
+        - VITE_API_URL=http://localhost:8000
+    container_name: frontend_dashboard
+    ports:
+      - "5173:80"
+    networks:
+      - distribuidos_net
+    depends_on:
+      orquestador:
+        condition: service_healthy
+
+networks:
+  distribuidos_net:
+    driver: bridge
+
+volumes:
+  sqlite_data:
