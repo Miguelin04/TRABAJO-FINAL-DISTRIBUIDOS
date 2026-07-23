@@ -39,7 +39,7 @@ class HealthMonitor:
             # Aislando la persistencia de la lógica de red
             for srv, changed in results.items():
                 if changed:
-                    self.db.update_node_state(srv.id, srv.status, srv.url)
+                    self.db.update_node_state(srv.id, srv.status, srv.address)
 
             time.sleep(self.interval)
 
