@@ -28,7 +28,7 @@ export default function MonitoringPage() {
   
   const nodos = data.nodos || [];
   const activos = nodos.filter(n => n.estado === "ACTIVO").length;
-  const totalNodos = nodos.length || 4;
+  const totalNodos = nodos.length || 3;
 
   const cbHistory = data.historial_circuit_breaker || [];
   const ultima = data.ultima_peticion;
@@ -122,12 +122,12 @@ export default function MonitoringPage() {
                 <div className="flex gap-4 w-full justify-center flex-wrap">
                   {nodos.map((n, i) => {
                      const isActive = n.estado === "ACTIVO";
-                     // Asignamos luz verde o gris basado en estado (o si respondió última)
-                     // Como no sabemos exactamente cuál respondió en /status fácilmente, marcamos verde si está activo.
+                     const ip = n.url ? n.url.replace('http://', '').split(':')[0] : '??.??.??.??';
                      return (
-                       <div key={n.id} className="bg-gray-900 border border-gray-700 p-3 rounded-lg text-center text-sm w-32">
-                         <div>{n.id}</div>
+                       <div key={n.id} className="bg-gray-900 border border-gray-700 p-3 rounded-lg text-center text-sm w-36">
+                         <div className="font-bold">{n.id}</div>
                          <div className="text-xs text-netflix-gray my-1">Puerto {9001 + i}</div>
+                         <div className="text-xs font-mono text-blue-400">{ip}</div>
                          <div className="mt-2 text-xl">{isActive ? '🟢' : '🔴'}</div>
                        </div>
                      )
@@ -137,13 +137,17 @@ export default function MonitoringPage() {
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-             {nodos.map((n, i) => (
+             {nodos.map((n, i) => {
+               const ip = n.url ? n.url.replace('http://', '').split(':')[0] : 'Sin IP';
+               return (
                 <div key={n.id} className="bg-netflix-dark p-4 rounded-lg border border-gray-800 text-sm">
-                   <div className="font-bold mb-2">Nodo {i+1}</div>
+                   <div className="font-bold mb-2">Nodo {i+1} — {n.id}</div>
+                   <div className="flex justify-between"><span className="text-netflix-gray">IP:</span> <span className="font-mono text-blue-400">{ip}</span></div>
                    <div className="flex justify-between"><span className="text-netflix-gray">Puerto:</span> <span>{9001 + i}</span></div>
-                   <div className="flex justify-between"><span className="text-netflix-gray">Estado:</span> <span className={n.estado === 'ACTIVO' ? 'text-green-500' : 'text-red-500'}>{n.estado}</span></div>
+                   <div className="flex justify-between"><span className="text-netflix-gray">Estado:</span> <span className={n.estado === 'ACTIVO' ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>{n.estado}</span></div>
                 </div>
-             ))}
+               );
+             })}
           </div>
         </div>
       </div>

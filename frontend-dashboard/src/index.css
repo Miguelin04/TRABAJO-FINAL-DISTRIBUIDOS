@@ -1,8 +1,30 @@
 @import "tailwindcss";
+
+:root {
+  --color-netflix-red: #E50914;
+  --color-netflix-dark: #141414;
+  --color-netflix-darker: #000000;
+  --color-netflix-gray: #808080;
+  --color-netflix-light: #e5e5e5;
+  --color-scrollbar-track: #000000;
+  --color-scrollbar-thumb: #333333;
+}
+
+.light-mode {
+  --color-netflix-red: #E50914;
+  --color-netflix-dark: #ffffff; /* Card bg */
+  --color-netflix-darker: #f3f4f6; /* App bg */
+  --color-netflix-gray: #6b7280; /* Text secondary */
+  --color-netflix-light: #111827; /* Text primary */
+  --color-scrollbar-track: #f3f4f6;
+  --color-scrollbar-thumb: #d1d5db;
+}
+
 body {
-  background-color: #141414;
-  color: #e5e5e5;
+  background-color: var(--color-netflix-darker);
+  color: var(--color-netflix-light);
   font-family: 'Inter', system-ui, sans-serif;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 /* Scrollbar Netflix Style */
@@ -10,12 +32,12 @@ body {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #000000; 
+  background: var(--color-scrollbar-track); 
 }
 ::-webkit-scrollbar-thumb {
-  background: #333333; 
+  background: var(--color-scrollbar-thumb); 
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #E50914; 
+  background: var(--color-netflix-red); 
 }

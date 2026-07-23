@@ -49,12 +49,13 @@ class DbRepository:
         # Nodos
         nodos = []
         try:
-            cursor.execute("SELECT nodo_id, estado, timestamp FROM estado_nodos ORDER BY nodo_id ASC")
+            cursor.execute("SELECT nodo_id, estado, url, timestamp FROM estado_nodos ORDER BY nodo_id ASC")
             for row in cursor.fetchall():
                 nodos.append({
                     "id": row[0],
                     "estado": row[1],
-                    "timestamp": row[2]
+                    "url": row[2],
+                    "timestamp": row[3]
                 })
         except sqlite3.OperationalError:
             pass # Si el balanceador aún no crea la tabla
