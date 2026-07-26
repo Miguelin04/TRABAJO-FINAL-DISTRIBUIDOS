@@ -14,7 +14,6 @@ export default function TestingPage() {
 
   const handleLike = async () => {
     setLoading(true);
-    addLog("POST", "/api/posts/post-123/like", "PENDING", "Enviando Escritura a N=3...");
     const result = await likePost("post-123");
     setResponse(result);
     if (result.status === 200) {
@@ -27,7 +26,6 @@ export default function TestingPage() {
   };
 
   const fetchPostData = async () => {
-    addLog("GET", "/api/posts/post-123", "PENDING", "Enviando Lectura a N=3...");
     const result = await getPost("post-123");
     if (result.status === 200 && result.data && result.data.postState) {
       setPostData(result.data.postState);

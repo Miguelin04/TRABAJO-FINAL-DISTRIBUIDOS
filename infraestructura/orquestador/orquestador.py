@@ -94,6 +94,8 @@ class OrquestadorHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/status":
             self.handle_status()
+        elif self.path == "/health":
+            self.send_json(200, {"status": "UP"})
         elif self.path.startswith("/api/posts/"):
             post_id = self.path.split("/")[-1]
             try:
