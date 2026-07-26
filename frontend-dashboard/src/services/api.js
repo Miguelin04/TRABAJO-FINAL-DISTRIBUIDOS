@@ -11,27 +11,28 @@ export const fetchStatus = async () => {
   }
 };
 
-export const procesarPago = async () => {
+export const likePost = async (postId = "post-123") => {
   try {
-    const response = await fetch(`${API_URL}/`);
+    const response = await fetch(`${API_URL}/api/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId })
+    });
     const data = await response.json();
     return { data, status: response.status };
   } catch (error) {
-    console.error("Error al procesar pago:", error);
+    console.error("Error al dar like:", error);
     return { data: null, status: 500 };
   }
 };
 
-export const simulateCrash = async (nodeId, crash) => {
+export const getPost = async (postId = "post-123") => {
   try {
-    const response = await fetch(`${API_URL}/api/simulate-crash`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: nodeId, crash: crash })
-    });
-    return response.ok;
+    const response = await fetch(`${API_URL}/api/posts/${postId}`);
+    const data = await response.json();
+    return { data, status: response.status };
   } catch (error) {
-    console.error("Error al simular crash:", error);
-    return false;
+    console.error("Error al obtener post:", error);
+    return { data: null, status: 500 };
   }
 };

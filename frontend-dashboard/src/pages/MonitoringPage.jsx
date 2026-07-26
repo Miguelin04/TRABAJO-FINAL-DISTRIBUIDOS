@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchStatus, simulateCrash } from '../services/api';
+import { fetchStatus } from '../services/api';
 
 export default function MonitoringPage() {
   const [data, setData] = useState(null);
@@ -21,200 +21,162 @@ export default function MonitoringPage() {
     return () => clearInterval(interval);
   }, []);
 
-  if (!data) return <div className="text-center mt-10">Cargando datos...</div>;
+  if (!data) return <div className="text-center mt-10">Cargando datos del Orquestador...</div>;
 
-  const cbState = data.circuit_breaker?.estado_actual || "CLOSED";
+  const cbState = data.circuit_breaker || "CLOSED";
   const cbColor = cbState === "CLOSED" ? "text-green-500" : cbState === "HALF_OPEN" ? "text-yellow-500" : "text-red-500";
   
-  const nodos = data.nodos || [];
-  const activos = nodos.filter(n => n.estado === "ACTIVO").length;
-  const totalNodos = nodos.length || 3;
-
-  const cbHistory = data.historial_circuit_breaker || [];
-  const historialPeticiones = data.historial_peticiones || [];
+  const nodos = data.nodes || [];
+  const activos = nodos.filter(n => n.status === "ACTIVO").length;
+  const totalNodos = nodos.length || 4;
   
-  // Calcular promedio del historial
-  let tiempoPromedio = 'N/A';
-  if (historialPeticiones.length > 0) {
-    const total = historialPeticiones.reduce((acc, curr) => acc + curr.tiempo_respuesta_ms, 0);
-    tiempoPromedio = `${Math.round(total / historialPeticiones.length)} ms`;
-  }
+  const metrics = data.metrics || {};
+  const quorum = data.quorum_stats || { N:3, W:2, R:2 };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center border-l-4 border-netflix-red pl-3">
-        <h2 className="text-2xl font-bold">Monitoreo en Tiempo Real</h2>
-        <div className="flex items-center gap-2 text-sm text-netflix-gray">
+      <div className="flex justify-between items-center border-l-4 border-blue-500 pl-3">
+        <h2 className="text-2xl font-bold">Observabilidad y Métricas Avanzadas</h2>
+        <div className="flex items-center gap-2 text-sm text-gray-400">
           <span className={`w-3 h-3 rounded-full animate-pulse ${error ? 'bg-red-500' : 'bg-green-500'}`}></span>
           Polling activo (2s)
         </div>
       </div>
       
-      {/* 9. Top Row: Quick Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-netflix-dark p-4 rounded-lg border border-gray-800 flex flex-col justify-center">
-          <span className="text-sm text-netflix-gray uppercase tracking-wider">Circuit Breaker</span>
+      {/* 1. Quick Metrics (Top Row) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-gray-900 text-white p-4 rounded-lg border border-gray-800 flex flex-col">
+          <span className="text-xs text-gray-500 uppercase">Circuit Breaker</span>
           <span className={`text-2xl font-bold ${cbColor}`}>{cbState}</span>
         </div>
-        <div className="bg-netflix-dark p-4 rounded-lg border border-gray-800 flex flex-col justify-center">
-          <span className="text-sm text-netflix-gray uppercase tracking-wider">Nodos</span>
+        <div className="bg-gray-900 text-white p-4 rounded-lg border border-gray-800 flex flex-col">
+          <span className="text-xs text-gray-500 uppercase">Nodos Vivos (Heartbeat)</span>
           <span className="text-2xl font-bold">{activos} / {totalNodos}</span>
         </div>
-        <div className="bg-netflix-dark p-4 rounded-lg border border-gray-800 flex flex-col justify-center">
-          <span className="text-sm text-netflix-gray uppercase tracking-wider">Último Tiempo Promedio</span>
-          <span className="text-2xl font-bold">{tiempoPromedio}</span>
+        <div className="bg-gray-900 text-white p-4 rounded-lg border border-gray-800 flex flex-col">
+          <span className="text-xs text-gray-500 uppercase">Quórum Configurado</span>
+          <span className="text-xl font-bold text-blue-400">N={quorum.N}, W={quorum.W}, R={quorum.R}</span>
         </div>
-        <div className="bg-netflix-dark p-4 rounded-lg border border-gray-800 flex flex-col justify-center">
-          <span className="text-sm text-netflix-gray uppercase tracking-wider">Database SQLite</span>
-          <span className="text-2xl font-bold text-green-500">Conectada ✔</span>
+        <div className="bg-gray-900 text-white p-4 rounded-lg border border-gray-800 flex flex-col">
+          <span className="text-xs text-gray-500 uppercase">Latencia Promedio</span>
+          <span className="text-2xl font-bold text-green-400">{metrics.avg_latency_ms} ms</span>
         </div>
       </div>
 
-      {/* Grid Central */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Columna 1: Tarjetas de Estado (2, 3 y 8) */}
+        {/* Columna Izquierda: Métricas Específicas */}
         <div className="space-y-4">
-          <div className="bg-netflix-dark p-5 rounded-lg border border-gray-800">
-            <h3 className="font-bold mb-3 border-b border-gray-700 pb-2">Circuit Breaker</h3>
-            <div className="flex justify-between mb-1">
-              <span className="text-netflix-gray">Estado</span>
-              <span className={`font-bold ${cbColor}`}>{cbState}</span>
+          <div className="bg-gray-900 text-white p-5 rounded-lg border border-gray-800">
+            <h3 className="font-bold mb-3 border-b border-gray-700 pb-2">Rendimiento (Quórum)</h3>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-400 text-sm">Escrituras (W=2) Exitosas</span>
+              <span className="font-bold text-blue-400">{metrics.successful_writes}</span>
             </div>
-            <div className="flex justify-between mb-1">
-              <span className="text-netflix-gray">Fallos consecutivos</span>
-              <span className="font-bold">{data.circuit_breaker?.fallos_acumulados || 0}</span>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-400 text-sm">Lecturas (R=2) Exitosas</span>
+              <span className="font-bold text-green-400">{metrics.successful_reads}</span>
             </div>
-            <div className="flex justify-between mb-1">
-              <span className="text-netflix-gray">Timeout configurado</span>
-              <span className="font-bold">10 s</span>
-            </div>
-          </div>
-
-          <div className="bg-netflix-dark p-5 rounded-lg border border-gray-800">
-            <h3 className="font-bold mb-3 border-b border-gray-700 pb-2">Balanceador</h3>
-            <div className="flex justify-between mb-1">
-              <span className="text-netflix-gray">Algoritmo</span>
-              <span className="font-bold">Round Robin</span>
-            </div>
-            <div className="flex justify-between mb-1">
-              <span className="text-netflix-gray">Heartbeat</span>
-              <span className="font-bold text-green-500">Activo</span>
-            </div>
-            <div className="flex justify-between mb-1">
-              <span className="text-netflix-gray">Nodo seleccionado</span>
-              <span className="font-bold">{data.balanceador?.nodo_seleccionado_round_robin || '-'}</span>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-400 text-sm">Total de Likes Globales</span>
+              <span className="font-bold text-white">{metrics.total_likes}</span>
             </div>
           </div>
 
-          <div className="bg-netflix-dark p-5 rounded-lg border border-gray-800">
-            <h3 className="font-bold mb-3 border-b border-gray-700 pb-2">SQLite (nodos.db)</h3>
-            <div className="flex justify-between mb-1">
-              <span className="text-netflix-gray">Circuit Logs</span>
-              <span className="font-bold">{cbHistory.length} Eventos</span>
+          <div className="bg-gray-900 text-white p-5 rounded-lg border border-gray-800">
+            <h3 className="font-bold mb-3 border-b border-gray-700 pb-2">Resolución de Conflictos</h3>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-400 text-sm">Read Repairs Ejecutados</span>
+              <span className="font-bold text-yellow-500">{metrics.read_repairs}</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-400 text-sm">Last Write Wins Aplicados</span>
+              <span className="font-bold text-orange-400">{metrics.last_write_wins_executed}</span>
+            </div>
+          </div>
+
+          <div className="bg-gray-900 text-white p-5 rounded-lg border border-gray-800">
+            <h3 className="font-bold mb-3 border-b border-gray-700 pb-2">Heurística de Red</h3>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-400 text-sm">Nodo más rápido (Líder)</span>
+              <span className="font-mono text-xs text-green-400">{metrics.leader_node_heuristic}</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-400 text-sm">Nodo más lento</span>
+              <span className="font-mono text-xs text-red-400">{metrics.slowest_node}</span>
             </div>
           </div>
         </div>
 
-        {/* Columna 2: Nodos y Diagrama (4 y 5) */}
+        {/* Columna Derecha: Topología */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-netflix-dark p-5 rounded-lg border border-gray-800">
-             <h3 className="font-bold mb-4 text-center">Topología de Red</h3>
-             <div className="flex flex-col items-center gap-4 py-4">
-                <div className="bg-gray-800 px-6 py-2 rounded border border-gray-600">Orquestador (Puerto 8000)</div>
-                <div className="w-1 h-6 bg-gray-600"></div>
-                <div className="bg-gray-800 px-6 py-2 rounded border border-gray-600">Balanceador (Puerto 8080)</div>
-                <div className="w-1 h-6 bg-gray-600"></div>
-                
-                <div className="flex gap-4 w-full justify-center flex-wrap">
-                  {nodos.map((n, i) => {
-                     const isActive = n.estado === "ACTIVO";
-                     const ip = n.url ? n.url.replace('http://', '').split(':')[0] : '??.??.??.??';
-                     return (
-                       <div key={n.id} className="bg-gray-900 border border-gray-700 p-3 rounded-lg text-center text-sm w-36">
-                         <div className="font-bold">{n.id}</div>
-                         <div className="text-xs text-netflix-gray my-1">Puerto {9001 + i}</div>
-                         <div className="text-xs font-mono text-blue-400">{ip}</div>
-                         <div className="mt-2 text-xl">{isActive ? '🟢' : '🔴'}</div>
-                       </div>
-                     )
-                  })}
-                </div>
-             </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-             {nodos.map((n, i) => {
-               const ip = n.url ? n.url.replace('http://', '').split(':')[0] : 'Sin IP';
-               return (
-                <div key={n.id} className="bg-netflix-dark p-4 rounded-lg border border-gray-800 text-sm">
-                   <div className="font-bold mb-2">Nodo {i+1} — {n.id}</div>
-                   <div className="flex justify-between"><span className="text-netflix-gray">IP:</span> <span className="font-mono text-blue-400">{ip}</span></div>
-                   <div className="flex justify-between"><span className="text-netflix-gray">Puerto:</span> <span>{9001 + i}</span></div>
-                   <div className="flex justify-between"><span className="text-netflix-gray">Estado:</span> <span className={n.estado === 'ACTIVO' ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>{n.estado}</span></div>
-                   <div className="flex justify-between items-center mt-2 border-t border-gray-700 pt-2">
-                     <span className="text-netflix-gray text-xs">Simulador:</span>
-                     <button
-                       onClick={() => simulateCrash(n.id, n.estado === 'ACTIVO')}
-                       className={`px-3 py-1 rounded text-xs font-bold ${n.estado === 'ACTIVO' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
-                     >
-                       {n.estado === 'ACTIVO' ? 'Apagar Nodo' : 'Encender Nodo'}
-                     </button>
-                   </div>
-                </div>
-               );
-             })}
-          </div>
-        </div>
-      </div>
-
-      {/* Tablas Inferiores (6) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-netflix-dark p-5 rounded-lg border border-gray-800">
-          <h3 className="font-bold mb-4 border-b border-gray-700 pb-2">Historial de Peticiones (Últimas 5)</h3>
-          {historialPeticiones.length > 0 ? (
-            <div className="space-y-3">
-              {historialPeticiones.map((pet, idx) => (
-                <div key={idx} className="p-3 bg-gray-900 rounded border border-gray-800 text-sm">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-netflix-gray">Hora: {pet.timestamp}</span>
-                    <span className="font-bold text-green-400">{pet.tiempo_respuesta_ms} ms</span>
-                  </div>
-                  <div className="text-xs font-mono break-words text-blue-300">
-                    {pet.mensaje || "Sin mensaje"}
-                  </div>
-                </div>
-              ))}
+          <div className="bg-[#0f111a] border border-gray-800 rounded-xl p-6 relative shadow-lg h-full">
+            <h3 className="text-gray-100 font-bold mb-6 text-center">Topología y Salud de la Red</h3>
+            
+            {/* Panel de Fallos */}
+            <div className="bg-black border border-blue-900/50 p-4 rounded-lg mb-8 text-sm">
+              <span className="text-blue-400 font-bold block mb-2">Panel de Simulador de Fallos:</span> Utiliza estos controles para apagar/encender nodos y probar el <span className="italic">Circuit Breaker</span> y el <span className="italic">Read Repair</span> en tiempo real.
+              <div className="flex justify-center gap-4 mt-4 flex-wrap">
+                 {[1, 2, 3].map(id => (
+                    <div key={id} className="flex gap-2">
+                        <button onClick={() => fetch('http://localhost:8080/api/simulate-crash', { method: 'POST', body: JSON.stringify({id: `Integrante${id}`, crash: true})})} className="bg-red-900/40 hover:bg-red-800 border border-red-700 text-red-200 px-3 py-1 rounded text-xs transition">Apagar Nodo {id}</button>
+                        <button onClick={() => fetch('http://localhost:8080/api/simulate-crash', { method: 'POST', body: JSON.stringify({id: `Integrante${id}`, crash: false})})} className="bg-green-900/40 hover:bg-green-800 border border-green-700 text-green-200 px-3 py-1 rounded text-xs transition">Encender Nodo {id}</button>
+                    </div>
+                  ))}
+              </div>
             </div>
-          ) : (
-             <div className="text-netflix-gray text-sm">Aún no se ha registrado ninguna petición.</div>
-          )}
-        </div>
 
-        <div className="bg-netflix-dark p-5 rounded-lg border border-gray-800 overflow-hidden">
-          <h3 className="font-bold mb-4 border-b border-gray-700 pb-2">Historial Circuit Breaker (Top 10)</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="text-netflix-gray border-b border-gray-800">
-                  <th className="pb-2 font-normal">ID</th>
-                  <th className="pb-2 font-normal">Estado</th>
-                  <th className="pb-2 font-normal">Hora</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cbHistory.map((h) => (
-                  <tr key={h.id} className="border-b border-gray-800/50">
-                    <td className="py-2">{h.id}</td>
-                    <td className={`py-2 font-bold ${h.estado === 'CLOSED' ? 'text-green-500' : h.estado === 'HALF_OPEN' ? 'text-yellow-500' : 'text-red-500'}`}>{h.estado}</td>
-                    <td className="py-2 text-netflix-gray">{h.timestamp}</td>
-                  </tr>
-                ))}
-                {cbHistory.length === 0 && (
-                  <tr><td colSpan="3" className="py-4 text-center text-netflix-gray">Sin eventos</td></tr>
-                )}
-              </tbody>
-            </table>
+            {/* Topology Diagram */}
+            <div className="flex flex-col items-center gap-2 py-2">
+               {/* Orquestador */}
+               <div className="bg-gray-800 text-white px-8 py-3 rounded border border-gray-700 shadow-md font-bold">
+                 Orquestador (Coordinador)
+               </div>
+               
+               <div className="w-1 h-6 bg-gray-700 animate-pulse"></div>
+
+               {/* Balanceador */}
+               <div className="bg-blue-900/20 text-blue-300 px-6 py-2 rounded-full border border-blue-800 shadow-md font-bold text-sm">
+                 Balanceador de Carga (Provee Status/Heartbeat)
+               </div>
+
+               <div className="w-1 h-6 bg-gray-700"></div>
+               
+               {/* Nodos */}
+               <div className="flex gap-4 w-full justify-center flex-wrap mt-2">
+                 {nodos.map((n, i) => {
+                    const isActive = n.status === "ACTIVO";
+                    return (
+                      <div key={n.id} className={`border p-4 rounded-lg text-center w-40 transition-colors ${isActive ? 'bg-[#0a0a0a] border-green-500/30' : 'bg-red-900/10 border-red-500/50'}`}>
+                        <div className="font-bold mb-1 truncate text-gray-200">{n.id}</div>
+                        <div className="text-xs text-gray-500 mb-3">{i === 3 ? '(Standby/Reserva)' : `Principal ${i+1}`}</div>
+                        <div className="text-3xl mb-2">{isActive ? '🟢' : '🔴'}</div>
+                        <div className={`text-xs font-bold ${isActive ? 'text-green-500' : 'text-red-500'}`}>
+                          {n.status}
+                        </div>
+                      </div>
+                    )
+                 })}
+               </div>
+            </div>
+            
+            {/* Historial Circuit Breaker */}
+            <div className="mt-8 pt-6 border-t border-gray-800">
+               <h3 className="font-bold mb-4 text-center text-gray-200">Historial del Circuit Breaker</h3>
+               <div className="max-h-40 overflow-y-auto bg-black p-4 rounded border border-gray-800">
+                   {(data.historial_circuit_breaker || []).map((h, i) => (
+                       <div key={i} className="flex justify-between text-xs py-1 border-b border-gray-800/50 last:border-0">
+                           <span className="text-gray-500">{h.timestamp}</span>
+                           <span className={`font-bold ${h.estado === 'CLOSED' ? 'text-green-500' : h.estado === 'HALF_OPEN' ? 'text-yellow-500' : 'text-red-500'}`}>
+                               Estado cambió a: {h.estado}
+                           </span>
+                       </div>
+                   ))}
+                   {(!data.historial_circuit_breaker || data.historial_circuit_breaker.length === 0) && (
+                       <div className="text-center text-gray-500 italic">No hay eventos registrados en el log SQLite.</div>
+                   )}
+               </div>
+            </div>
           </div>
         </div>
       </div>

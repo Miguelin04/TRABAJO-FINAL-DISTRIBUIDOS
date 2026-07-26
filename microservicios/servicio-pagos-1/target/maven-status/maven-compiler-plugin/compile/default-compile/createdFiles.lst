@@ -1,0 +1,6 @@
+com\netflix\pagos\infrastructure\repository\InMemoryPostRepository.class
+com\netflix\pagos\domain\model\PostState.class
+com\netflix\pagos\infrastructure\controller\PostController.class
+com\netflix\pagos\domain\repository\PostRepository.class
+com\netflix\pagos\application\dto\PostResponseDTO.class
+com\netflix\pagos\application\service\LikeService.class

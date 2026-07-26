@@ -14,7 +14,7 @@ services:
     networks:
       - distribuidos_net
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9001/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9001/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -30,7 +30,7 @@ services:
     networks:
       - distribuidos_net
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9002/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9002/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -46,7 +46,7 @@ services:
     networks:
       - distribuidos_net
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9003/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9003/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -62,7 +62,7 @@ services:
     networks:
       - distribuidos_net
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9004/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9004/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -95,7 +95,7 @@ services:
       servicio-pagos-4:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/health"]
       interval: 5s
       timeout: 3s
       retries: 3
@@ -119,7 +119,7 @@ services:
       balanceador:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8000/health"]
       interval: 5s
       timeout: 3s
       retries: 3

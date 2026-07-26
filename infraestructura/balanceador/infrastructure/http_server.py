@@ -17,6 +17,19 @@ class BalancerHandler(BaseHTTPRequestHandler):
             self._send_json_response(200, {"status": "UP"})
             return
             
+        if self.path == '/nodes/status':
+            # Reutiliza el estado en memoria mantenido por el Heartbeat de la Práctica 16
+            nodes_status = []
+            if self.load_balancer and self.load_balancer.servers:
+                for srv in self.load_balancer.servers:
+                    nodes_status.append({
+                        "id": srv.id,
+                        "url": srv.address,
+                        "status": "ACTIVO" if srv.status == 'ACTIVO' else "INACTIVO"
+                    })
+            self._send_json_response(200, {"nodes": nodes_status})
+            return
+
         self._proxy_request("GET")
 
     def do_POST(self):

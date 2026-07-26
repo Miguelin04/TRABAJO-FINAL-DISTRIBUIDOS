@@ -32,9 +32,9 @@ export default function Layout({ children, currentView, setView }) {
             </button>
             <button 
               onClick={() => setView('testing')}
-              className={`px-4 py-2 rounded transition-colors ${currentView === 'testing' ? 'bg-netflix-red text-white font-semibold' : 'hover:bg-gray-800'}`}
+              className={`px-4 py-2 rounded transition-colors ${currentView === 'testing' ? 'bg-blue-600 text-white font-semibold' : 'hover:bg-gray-800'}`}
             >
-              Pruebas API
+              Red Social (Simulación)
             </button>
             <button 
               onClick={() => setIsLightMode(!isLightMode)}
